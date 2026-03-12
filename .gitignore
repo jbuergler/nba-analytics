@@ -1,0 +1,8 @@
+.Rhistory
+.Rdata
+.RData
+.Ruserdata
+.DS_Store
+Thumbs.db
+*.zip
+*.gz

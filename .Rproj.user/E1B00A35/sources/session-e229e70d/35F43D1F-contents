@@ -1,0 +1,15 @@
+.Rhistory
+.Rdata
+.RData
+.Ruserdata
+.DS_Store
+Thumbs.db
+*.zip
+*.gz
+
+git remote add origin https://github.com/jbuergler/nba-analytics.git
+git branch -M main
+
+git add .
+git commit -m "Initial project setup"
+git push -u origin main
