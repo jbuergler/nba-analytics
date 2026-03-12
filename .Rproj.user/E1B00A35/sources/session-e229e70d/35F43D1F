@@ -3,7 +3,7 @@
     "path": "~/ULMS744/nba-analytics/.gitignore",
     "project_path": ".gitignore",
     "type": "gitignore",
-    "hash": "658335136",
+    "hash": "0",
     "contents": "",
     "dirty": true,
     "created": 1773322987929.0,
@@ -12,7 +12,7 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "14,0",
+        "cursorPosition": "9,0",
         "scrollLine": "0"
     },
     "folds": "",
@@ -20,7 +20,7 @@
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1773325388619,
+    "last_content_update": 1773326119688,
     "read_only": false,
     "read_only_alternatives": []
 }
