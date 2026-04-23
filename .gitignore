@@ -8,3 +8,5 @@ Thumbs.db
 *.gz
 
 .Rproj.user
+
+data/raw
