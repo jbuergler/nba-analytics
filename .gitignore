@@ -9,4 +9,6 @@ Thumbs.db
 
 .Rproj.user
 
-data/raw
+data/
+.claude/
+.codex

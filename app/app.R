@@ -26,7 +26,14 @@ lakers_theme <- bs_theme(
   primary   = "#552583",
   secondary = "#FDB927",
   success   = "#2E7D32",
-  base_font = font_google("Inter")
+  base_font = font_collection(
+    "-apple-system",
+    "BlinkMacSystemFont",
+    "Segoe UI",
+    "Helvetica Neue",
+    "Arial",
+    "sans-serif"
+  )
 )
 
 vb_title <- function(x) tags$span(style = "font-size: 0.8rem;",  x)
@@ -48,7 +55,6 @@ ui <- page_sidebar(
        The right card is an interactive tree map — hover any tile
        for attempts, share, eFG% and the change vs the other era.")
   ),
-  
   # --- Pattern C: headline numbers with era deltas (slim) ---
   layout_columns(
     col_widths = c(4, 4, 4),
@@ -68,11 +74,9 @@ ui <- page_sidebar(
               showcase = vb_icon("graph-up"),
               theme    = "success")
   ),
-  
   # --- Pattern D: two cards side by side ---
   layout_columns(
     col_widths = c(6, 6),
-    
     # Pattern B: zone — Volume + Efficiency in a tabbed card
     navset_card_tab(
       title = "Shot Selection by Zone",
@@ -80,7 +84,6 @@ ui <- page_sidebar(
       nav_panel("Volume",     plotlyOutput("zone_bars", height = "320px")),
       nav_panel("Efficiency", plotlyOutput("zone_eff",  height = "320px"))
     ),
-    
     # Action families — single-chart card, tree map of original action_types
     card(
       card_header("Action Families — Efficiency"),
@@ -94,11 +97,9 @@ ui <- page_sidebar(
 )
 
 server <- function(input, output, session) {
-  
   player_shots <- reactive({
     lakers_shots |> filter(player_name == input$player)
   })
-  
   # --- Era metrics (Sketch 4) ---
   era_metrics <- reactive({
     player_shots() |>
@@ -110,7 +111,6 @@ server <- function(input, output, session) {
       pivot_wider(names_from = era,
                   values_from = c(efg, xefg, diff))
   })
-  
   fmt_pct   <- function(x) paste0(round(x * 100, 1), "%")
   fmt_pp    <- function(x) paste0(if (x >= 0) "+" else "",
                                   round(x * 100, 1), " pp")
@@ -119,12 +119,10 @@ server <- function(input, output, session) {
     arrow <- if (d > 0) "▲" else if (d < 0) "▼" else "—"
     paste0(arrow, " ", fmt_pp(d), " vs AD (", fmt_pct(ad), ")")
   }
-  
   # Headline values = Luka Era
   output$efg_value  <- renderText({ fmt_pct(era_metrics()$`efg_Luka Era`)  })
   output$xefg_value <- renderText({ fmt_pct(era_metrics()$`xefg_Luka Era`) })
   output$diff_value <- renderText({ fmt_pp(era_metrics()$`diff_Luka Era`)  })
-  
   # Delta lines = Luka − AD
   output$efg_delta  <- renderText({
     m <- era_metrics(); fmt_delta(m$`efg_Luka Era`,  m$`efg_AD Era`)
@@ -135,7 +133,6 @@ server <- function(input, output, session) {
   output$diff_delta <- renderText({
     m <- era_metrics(); fmt_delta(m$`diff_Luka Era`, m$`diff_AD Era`)
   })
-  
   # --- Volume: share of attempts per zone (Sketch 1) ---
   output$zone_bars <- renderPlotly({
     plot_data <- player_shots() |>
@@ -143,7 +140,6 @@ server <- function(input, output, session) {
       group_by(era) |>
       mutate(share = n / sum(n)) |>
       ungroup()
-    
     gg <- ggplot(plot_data,
                  aes(x = shot_zone_basic, y = share, fill = era,
                      text = paste0(era, "<br>", shot_zone_basic, "<br>",
@@ -156,10 +152,8 @@ server <- function(input, output, session) {
       theme_minimal(base_size = 11) +
       theme(legend.position = "top",
             axis.text.x = element_text(angle = 20, hjust = 1))
-    
     ggplotly(gg, tooltip = "text")
   })
-  
   # --- Efficiency: eFG% per zone (Sketch 2) ---
   output$zone_eff <- renderPlotly({
     plot_data <- player_shots() |>
@@ -167,7 +161,6 @@ server <- function(input, output, session) {
       summarise(efg      = sum(shot_made_flag * shot_value) / (2 * n()),
                 attempts = n(),
                 .groups  = "drop")
-    
     gg <- ggplot(plot_data,
                  aes(x = shot_zone_basic, y = efg, fill = era,
                      text = paste0(era, "<br>", shot_zone_basic, "<br>",
@@ -180,10 +173,8 @@ server <- function(input, output, session) {
       theme_minimal(base_size = 11) +
       theme(legend.position = "top",
             axis.text.x = element_text(angle = 20, hjust = 1))
-    
     ggplotly(gg, tooltip = "text")
   })
-  
   # --- Action-family long table, one row per (era × family × action_type).
   #     proportion is the share of attempts *within each era*, so the two
   #     era sub-trees stay comparable even when one has fewer total shots. ---
@@ -198,20 +189,17 @@ server <- function(input, output, session) {
       mutate(proportion = attempts / sum(attempts)) |>
       ungroup()
   })
-  
   # --- Build one treemap-node table per era: families at the root,
   #     original action_types as leaves. The era label is handled as a
   #     subplot title (not as a tile) so the drill-down starts at family. ---
   era_tree_nodes <- reactive({
     d <- family_data()
-    
     wide <- d |>
       mutate(era_key = if_else(era == "AD Era", "ad", "luka")) |>
       select(-era) |>
       pivot_wider(id_cols     = c(action_family, action_type),
                   names_from  = era_key,
                   values_from = c(attempts, proportion, efg))
-    
     enriched <- d |>
       left_join(wide, by = c("action_family", "action_type")) |>
       mutate(
@@ -223,14 +211,11 @@ server <- function(input, output, session) {
         proportion_delta = proportion - proportion_other,
         efg_delta        = efg - efg_other
       )
-    
     sign_pp <- function(x) paste0(if_else(x >= 0, "+", ""),
                                   round(x * 100, 1), " pp")
-    
     build_one <- function(era_name) {
       e <- enriched |> filter(era == era_name)
       if (nrow(e) == 0) return(NULL)
-      
       leaves <- e |>
         transmute(
           id      = paste(action_family, action_type, sep = "/"),
@@ -249,7 +234,6 @@ server <- function(input, output, session) {
                     "")
           )
         )
-      
       families <- e |>
         group_by(action_family) |>
         summarise(attempts_total   = sum(attempts),
@@ -268,13 +252,10 @@ server <- function(input, output, session) {
                            "Share: ", round(proportion_total * 100, 1), "%<br>",
                            "eFG%: ", round(efg_val * 100, 1), "%")
         )
-      
       bind_rows(families, leaves)
     }
-    
     list(ad = build_one("AD Era"), luka = build_one("Luka Era"))
   })
-  
   # --- Tree map: Efficiency.
   #     Two traces (AD Era, Luka Era) side by side with era as the title;
   #     tile area = share of attempts within that era;
@@ -284,7 +265,6 @@ server <- function(input, output, session) {
     trees <- era_tree_nodes()
     validate(need(!is.null(trees$ad) || !is.null(trees$luka),
                   "No shots to show for this player."))
-    
     efg_marker <- function(efg_vals) list(
       colors     = efg_vals,
       colorscale = "Viridis",
@@ -294,7 +274,6 @@ server <- function(input, output, session) {
       colorbar   = list(title = list(text = "eFG%"),
                         tickformat = ".0%")
     )
-    
     add_era_trace <- function(p, nodes, column) {
       if (is.null(nodes)) return(p)
       add_trace(p,
@@ -311,7 +290,6 @@ server <- function(input, output, session) {
                 domain        = list(column = column)
       )
     }
-    
     annotations <- list(
       list(text = "<b>AD Era</b>",
            x = 0.22, y = 1.0, xref = "paper", yref = "paper",
@@ -322,7 +300,6 @@ server <- function(input, output, session) {
            xanchor = "center", yanchor = "bottom",
            showarrow = FALSE, font = list(size = 13))
     )
-    
     plot_ly() |>
       add_era_trace(trees$ad,   0) |>
       add_era_trace(trees$luka, 1) |>
